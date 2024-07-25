@@ -191,3 +191,158 @@ kev_cve_cwes |>
   ) |> 
   distinct(cweID, name) |> 
   arrange(name)
+
+latest_kev <- read_csv("~/gn/labs-viz-data/docs/kev.csv")
+
+kev |> 
+  rename(
+    cve_id = "label"
+  ) |> 
+  left_join(
+    latest_kev |> 
+      select(
+        cve_id = cveID,
+        dueDate
+      )
+  ) |> 
+  mutate(
+    days_to_fix = dueDate - dateAdded,
+    year = year(dateAdded)
+  ) |> 
+  select(
+    group,
+    dateAdded,
+    days_to_fix
+  ) -> kev_due_delta
+
+kev_due_delta |> 
+  mutate(
+    length = ifelse(days_to_fix <= 14, "Short", "Long"),
+    days_to_fix = as.numeric(days_to_fix)
+  ) |> 
+  filter(
+    days_to_fix >= 0
+  ) |> 
+  ggplot() +
+  geom_vline(
+    xintercept = c(as.Date("2022-02-23"), as.Date("2022-06-09")),
+    linetype = "dotted"
+  ) +
+  geom_point(
+    aes(dateAdded, days_to_fix, color = length)
+  ) +
+  scale_color_manual(
+    values = c(
+      "Short" = "red",
+      "Long" = "steelblue"
+    )
+  ) +
+  scale_y_continuous(
+    trans = "log10",
+    label = scales::comma_format()
+  ) +
+  theme_ipsum_gs(grid="XY")
+
+kev |> 
+  rename(
+    cve_id = "label"
+  ) |> 
+    left_join(
+      latest_kev |> 
+        select(
+          cve_id = cveID,
+          dueDate
+        )
+    ) |> 
+  mutate(
+    days_to_fix = as.numeric(dueDate - dateAdded),
+    year = year(dateAdded),
+    qtr = quarter(dateAdded, type = "date_last"),
+    dow = wday(dateAdded, label = TRUE, abbr = FALSE) |> 
+      factor(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") |> rev())
+  ) |>
+  filter(year != 2021) |> 
+  count(dateAdded, days_to_fix, dow) |> 
+  filter(dow == "Friday") |> 
+  arrange(
+    desc(dateAdded)
+  ) |> 
+  count(days_to_fix, sort=TRUE)
+
+
+kev |> 
+  rename(
+    cve_id = "label"
+  ) |> 
+  mutate(
+    year = year(dateAdded),
+    qtr = quarter(dateAdded, type = "date_last"),
+    dow = wday(dateAdded, label = TRUE, abbr = FALSE) |> 
+      factor(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") |> rev())
+  ) |>
+  filter(year != 2021) |> 
+  count(dateAdded, dow) |> 
+  ggplot() +
+  geom_point(
+    aes(dateAdded, dow, size = n),
+    shape = 21,
+    stroke = 3/4,
+    color = "white",
+    fill = alpha("steelblue", 4/5),
+    show.legend = FALSE
+  ) +
+  scale_x_date(
+    position = "top",
+    sec.axis = dup_axis()
+  ) +
+  scale_size_area(
+    max_size = 20
+  ) +
+  labs(
+    x = NULL, y = NULL
+  ) +
+  theme_ipsum_gs(grid="XY")
+
+kev |> 
+  rename(
+    cve_id = "label"
+  ) |> 
+  mutate(
+    year = year(dateAdded),
+    qtr = quarter(dateAdded, type = "date_last"),
+    dow = wday(dateAdded, label = TRUE, abbr = FALSE) |> 
+      factor(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") |> rev())
+  ) |>
+  filter(year != 2021) |> 
+  count(qtr, dow) |> 
+  group_by(qtr) |> 
+  mutate(
+    pct = proportions(n) * 100
+  ) |> 
+  ungroup() |> 
+  complete(qtr, dow) |> 
+  ggplot() +
+  geom_tile(
+    aes(qtr, dow, fill = pct),
+    color = "white",
+    size = 1
+  ) +
+  geom_text(
+    aes(
+      qtr, dow, 
+      label = sprintf("%s\n(%s)", n, scales::percent(pct/100, 1)),
+      color = I(ifelse(pct < 30, "white", "black"))
+    ),
+  ) +
+  scale_x_date(
+    expand = c(0,0,0,0),
+    position = "top"
+  ) +
+  scale_fill_viridis_c(
+    begin = 0.2,
+    end = 0.9,
+    option = "magma",
+    na.value = "grey80",
+    trans = "log10"
+  ) +
+  theme_ipsum_gs(grid="")
