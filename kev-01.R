@@ -175,13 +175,13 @@ list(
 kev |> 
   mutate(
     group = case_when(
-      dateAdded == as.Date("2021-11-03") ~ "First KEV",
-      between(dateAdded, as.Date("2022-02-23"), as.Date("2022-06-09")) ~ "UKR Conflict",
+      dateAdded == as.Date("2021-11-03") ~ "\nFirst KEV",
+      between(dateAdded, as.Date("2022-02-23"), as.Date("2022-06-09")) ~ "\nUKR Conflict",
       between(dateAdded, as.Date("2021-11-17"), as.Date("2022-02-22")) |
-        dateAdded >= as.Date("2022-06-10") ~ "Everything Else"
+        dateAdded >= as.Date("2022-06-10") ~ "\nEverything Else"
     ) |> 
       factor(
-        levels = c("First KEV", "UKR Conflict", "Everything Else")
+        levels = c("\nFirst KEV", "\nUKR Conflict", "\nEverything Else")
       )
   ) |> 
   filter(!is.na(label)) -> kev
@@ -197,10 +197,23 @@ kev |>
   ggplot() +
   geom_quasirandom(
     aes(group, cve_age_at_kev_drop),
-    size = 1/2
+    size = 1,
+    color = yellow_j
   ) +
-  scale_y_comma() +
-  theme_ipsum_gs(grid="Y")
+  scale_y_continuous(
+    expand = c(0,0,0,0),
+    breaks = c(365, 365*3, 365*5, 365*10, 365*20),
+    labels = c("1 year", "3 years", "5 years", "10 years", "20 years")
+  ) +
+  labs(
+    x = NULL, y = NULL,
+    title = "KEV CVE Age By Group\n"
+  ) +
+  theme_ipsum_gs(grid="Y") +
+  theme_jeopardy() +
+  theme(
+    axis.line.x.bottom = element_line(color = "white", size = 1/2)
+  )
 
 kev |> 
   mutate(
@@ -208,3 +221,15 @@ kev |>
   ) -> kev_source_of_truth
 
 saveRDS(kev_source_of_truth, "kev-source-of-truth.rds")
+
+
+geom_violin(
+  aes("", cvss),
+  fill = alpha(orange_j, 1/4),
+  color = yellow_j,
+  size = 1
+) +
+geom_quasirandom(
+  aes("", cvss),
+  color = orange_j
+) 

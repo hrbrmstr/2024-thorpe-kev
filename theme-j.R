@@ -47,6 +47,7 @@ yellow_j <- "#fef758"
 blue_j <- "#231ab6"
 pink_j <- "#EF3265"
 orange_j <- "#e98548"
+purple_j <- "#6418B6"
 j_grad <- c("#6418B6", "#EF3265", "#FFF720")
 
 # scale_fill_gradientn(
