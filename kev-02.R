@@ -3,29 +3,7 @@ library(patchwork)
 library(ggbeeswarm)
 library(hrbrthemes)
 
-theme_jeopardy <- function() {
-  theme(
-    panel.background = element_rect(fill="#231ab6", color="#231ab6"),
-    plot.background = element_rect(fill="#231ab6", color="white"),
-    plot.margin = margin(30, 30, 30, 30),
-    axis.text = element_text(color = "white", size=16),
-    panel.grid.major.x = element_line(size = 0.125, color="#747ed8"),
-    panel.grid.major.y = element_line(size = 0.125, color="#747ed8"),
-    panel.grid.minor.x = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    legend.position = "bottom",
-    legend.direction = "horizontal",
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    legend.box.background = element_blank(),
-    legend.text = element_text(color = "white"),
-    legend.title = element_text(color = "white")
-  )
-}
-
-yellow_j <- "#fef758"
-blue_j <- "#231ab6"
-j_grad <- c("#6418B6", "#EF3265", "#FFF720")
+source("theme-j.R")
 
 kev <- readRDS("kev-source-of-truth.rds")
 
@@ -51,32 +29,71 @@ for_cvss |>
   ggplot() +
   geom_density(
     aes(cvss, y = stat(count)),
-    fill = alpha(yellow_j, 3/4),
-    color = yellow_j
+    fill = alpha(orange_j, 1/4),
+    color = yellow_j,
+    size = 1
   ) +
-  scale_x_continuous(limits = c(0, 10)) +
+  scale_x_continuous(
+    breaks = seq(0, 10, 1),
+    limits = c(0, 10)
+  ) +
   scale_y_comma() +
   labs(
-    x = "CVSS Score (V2 when no V3 available)", y = "# CVEs",
-    title = "CVSS Score Distribution Of KEV"
+    x = NULL, y = "# CVEs",
+    title = "CVSS Score Distribution Of KEV",
+    subtitle = "CVSS Score (V2 when no V3 available)"
   ) +
-  theme_jeopardy() -> cvss_dist_kev
+  theme_jeopardy() 
+
+for_cvss |> 
+  ggplot() +
+  geom_violin(
+    aes("", cvss),
+    fill = alpha(orange_j, 1/4),
+    color = yellow_j,
+    size = 1
+  ) +
+  geom_quasirandom(
+    aes("", cvss),
+    color = orange_j
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 10, 1),
+    limits = c(0, 10)
+  ) +
+  # scale_x_comma() +
+  coord_flip() +
+  labs(
+    x = NULL, y = NULL,
+    title = "CVSS Score Distribution Of KEV",
+    subtitle = "CVSS Score (V2 when no V3 available)"
+  ) +
+  theme_ipsum_gs() +
+  theme_jeopardy() 
 
 for_cvss |> 
   ggplot() +
   geom_density(
     aes(cvss, y = stat(count)),
-    fill = alpha(yellow_j, 3/4),
-    color = yellow_j
+    color = yellow_j,
+    fill = alpha(orange_j, 1/4),
+    size = 1
   ) +
-  scale_x_continuous(limits = c(0, 10)) +
+  scale_x_continuous(
+    breaks = seq(0, 10, 1),
+    limits = c(0, 10)
+  ) +
   scale_y_comma() +
   facet_wrap(~group, ncol=1) +
   labs(
-    x = "CVSS Score (V2 when no V3 available)", y = "# CVEs",
+    x = NULL, y = NULL,
     title = "CVSS Score Distribution Of KEV By Group"
   ) +
-  theme_jeopardy() -> cvss_dist_by_kev_group
+  theme_ipsum_gs(grid="XY") +
+  theme_jeopardy() +
+  theme(
+    panel.spacing.y = unit(3/4, "in")
+  )
 
 for_cvss |> 
   mutate(
@@ -87,23 +104,47 @@ for_cvss |>
     !is.na(delta)
   ) |> 
   ggplot() +
+  geom_vline(
+    xintercept = c(365, 365*3, 365*5, 365*10, 365*20),
+    color = orange_j
+  ) +
+  geom_label(
+    data = data.frame(
+      x = c(365, 365*3, 365*5, 365*10, 365*20),
+      y = rep(170, 5),
+      label = c("  1 year", "  3 years", "  5 years", "  10 years", "20 years   "),
+      hjust = c(0, 0, 0, 0, 1)
+    ),
+    aes(
+      x = x, y = y, label = label, hjust = hjust
+    ), 
+    vjust = 1,
+    color = yellow_j,
+    label.size = 0,
+    fill = "#231ab6"
+  ) +  
+  geom_vline(
+    xintercept = c(365, 365*3, 365*5, 365*10, 365*20),
+    color = orange_j
+  ) +
   geom_histogram(
     aes(delta),
-    fill = alpha(yellow_j, 3/4),
+    fill = alpha(orange_j, 1/4),
     color = yellow_j
   ) +
-  # geom_density(
-  #   aes(delta, y = stat(count)),
-  #   fill = alpha(yellow_j, 3/4),
-  #   color = yellow_j
-  # ) +
+  scale_x_comma() +
   scale_y_comma() +
   facet_wrap(~group, ncol=1) +
   labs(
-    x = "CVSS Age", y = "# CVEs",
-    title = "CVSS Age Distribution Of KEV By Group"
+    x = "CVE Age", y = "# CVEs",
+    title = "CVE Age Distribution Of KEV By Group"
   ) +
-  theme_jeopardy() -> cve_age_dist_by_group
+  theme_ipsum_gs(grid="XY") +
+  theme_jeopardy() +
+  theme(
+    panel.spacing.y = unit(3/4, "in"),
+    axis.text.x.bottom = element_blank()
+  )
 
 for_cvss |> 
   mutate(
@@ -117,16 +158,21 @@ for_cvss |>
   ggplot() +
   geom_histogram(
     aes(delta),
-    fill = alpha(blue_j, 3/4),
-    color = blue_j
+    fill = alpha(orange_j, 1/4),
+    color = yellow_j,
+    size = 0.25
   ) +
-  scale_y_comma() +
+  scale_x_comma(
+    breaks = c(365, 365*10, 365*20),
+    labels = c("1\nyear(s)", "10", "20")
+  ) +
   facet_wrap(~pubYear, nrow=1) +
   labs(
     x = "CVSS Age", y = "# CVEs",
     title = "CVSS Age Distribution Of KEV Year"
   ) +
-  theme_ipsum_gs(grid="Y") -> cvs_age_by_kev_year
+  theme_ipsum_gs(grid="Y") +
+  theme_jeopardy()
 
 
 for_cvss |> 
@@ -217,7 +263,7 @@ kev |>
 
 kev_due_delta |> 
   mutate(
-    length = ifelse(days_to_fix <= 14, "Short", "Long"),
+    length = ifelse(days_to_fix <= 10, "Short", "Long"),
     days_to_fix = as.numeric(days_to_fix)
   ) |> 
   filter(
@@ -226,22 +272,46 @@ kev_due_delta |>
   ggplot() +
   geom_vline(
     xintercept = c(as.Date("2022-02-23"), as.Date("2022-06-09")),
-    linetype = "dotted"
+    linetype = "dotted",
+    color = orange_j
   ) +
+  geom_text(
+    data = data.frame(
+      x = as.Date("2022-04-17"),
+      y = 70,
+      label = "← UKR KEV Drops →"
+    ),
+    aes(
+      x = x, y = y, label = label
+    ),
+    color = orange_j
+  ) +
+  # geom_point(
+  #   aes(dateAdded, days_to_fix),
+  #   color = yellow_j,
+  #   show.legend = FALSE
+  # ) +
   geom_point(
-    aes(dateAdded, days_to_fix, color = length)
+    aes(dateAdded, days_to_fix, color = length),
+    alpha = 1,
+    show.legend = FALSE
   ) +
   scale_color_manual(
     values = c(
-      "Short" = "red",
-      "Long" = "steelblue"
+      "Short" = yellow_j,
+      "Long" = pink_j
     )
   ) +
   scale_y_continuous(
     trans = "log10",
     label = scales::comma_format()
   ) +
-  theme_ipsum_gs(grid="XY")
+  labs(
+    x = NULL, y = "# Days",
+    title = "Days To Fix"
+  ) +
+  theme_ipsum_gs(grid="XY") +
+  theme_jeopardy()
 
 kev |> 
   rename(
@@ -286,9 +356,9 @@ kev |>
   geom_point(
     aes(dateAdded, dow, size = n),
     shape = 21,
-    stroke = 3/4,
+    stroke = 2/4,
     color = "white",
-    fill = alpha("steelblue", 4/5),
+    fill = alpha(purple_j, 4/5),
     show.legend = FALSE
   ) +
   scale_x_date(
@@ -299,9 +369,11 @@ kev |>
     max_size = 20
   ) +
   labs(
-    x = NULL, y = NULL
+    x = NULL, y = NULL,
+    title = "KEV Drops By Weekday"
   ) +
-  theme_ipsum_gs(grid="XY")
+  theme_ipsum_gs(grid="XY") +
+  theme_jeopardy()
 
 kev |> 
   rename(
