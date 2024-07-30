@@ -108,6 +108,35 @@ for_cvss |>
     xintercept = c(365, 365*3, 365*5, 365*10, 365*20),
     color = orange_j
   ) +
+  geom_vline(
+    data = data.frame(
+      xi = c(591, 1898, 567),
+      group = c("First KEV", "UKR Conflict", "Everything Else")
+    ),
+    aes(
+      xintercept = xi
+    ),
+    color = "white", 
+    linewidth = 2,
+    linetype = "dotted"
+  ) +
+  geom_label(
+    data = data.frame(
+      x = c(591, 1898, 567),
+      y = c(125, 125, 125),
+      lab = sprintf("μ %sd", scales::comma(c(591, 1898, 567))),
+      group = c("First KEV", "UKR Conflict", "Everything Else")
+    ),
+    aes(
+      x = x+10, y = y, label = lab
+    ),
+    hjust = 0,
+    label.size = NA,
+    family = "Arial",
+    size = 8,
+    color = "white", 
+    fill = blue_j
+  ) +
   geom_label(
     data = data.frame(
       x = c(365, 365*3, 365*5, 365*10, 365*20),
@@ -164,15 +193,18 @@ for_cvss |>
   ) +
   scale_x_comma(
     breaks = c(365, 365*10, 365*20),
-    labels = c("1\nyear(s)", "10", "20")
+    labels = c("1 year(s)", "10", "20")
   ) +
   facet_wrap(~pubYear, nrow=1) +
   labs(
     x = "CVSS Age", y = "# CVEs",
-    title = "CVSS Age Distribution Of KEV Year"
+    title = "CVE Age Distribution"
   ) +
   theme_ipsum_gs(grid="Y") +
-  theme_jeopardy()
+  theme_jeopardy() +
+  theme(
+    axis.text.x.bottom = element_text(size = 10)
+  )
 
 
 for_cvss |> 
