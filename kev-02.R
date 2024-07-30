@@ -111,7 +111,10 @@ for_cvss |>
   geom_vline(
     data = data.frame(
       xi = c(591, 1898, 567),
-      group = c("First KEV", "UKR Conflict", "Everything Else")
+      group = c("First KEV", "UKR Conflict", "Everything Else") |> 
+        factor(
+          levels =  c("First KEV", "UKR Conflict", "Everything Else")
+        )
     ),
     aes(
       xintercept = xi
@@ -125,7 +128,10 @@ for_cvss |>
       x = c(591, 1898, 567),
       y = c(125, 125, 125),
       lab = sprintf("μ %sd", scales::comma(c(591, 1898, 567))),
-      group = c("First KEV", "UKR Conflict", "Everything Else")
+      group = c("First KEV", "UKR Conflict", "Everything Else") |> 
+        factor(
+          levels = c("First KEV", "UKR Conflict", "Everything Else")
+        )
     ),
     aes(
       x = x+10, y = y, label = lab
